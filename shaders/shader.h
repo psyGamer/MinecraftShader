@@ -1,5 +1,6 @@
 #ifdef composite
 #define DYNAMIC_SHADOWS
+#define DYNAMIC_SHADOW_SAMPLES 2 // [0 1 2 3 4 5 6 7 8 9 10]
 #define DIFFUSE_SHADOWS
 
 #define SUN_ROTATION 40 //[-90 -85 -80 -75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90]

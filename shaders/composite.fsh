@@ -41,7 +41,12 @@ const vec3 TorchColor = vec3(1, 0.25, 0.08);
 const vec3 SkyColor = vec3(0.05, 0.15, 0.3);
 
 #ifdef DYNAMIC_SHADOWS
-const int ShadowSamples = 2;
+#ifdef DYNAMIC_SHADOW_SAMPLES
+const int ShadowSamples = DYNAMIC_SHADOW_SAMPLES;
+#else
+const int ShadowSamples = 1;
+#endif // DYNAMIC_SHADOW_SAMPLES
+
 const int ShadowSamplesPerSize = 2 * ShadowSamples + 1;
 const int TotalSamples = ShadowSamplesPerSize * ShadowSamplesPerSize;
 
@@ -136,6 +141,8 @@ void main() {
 #else
     vec3 final = albedo * lightmap + Ambient;
 #endif // DYNAMIC_SHADOWS
+
+    // final = vec3(getShadow(depth));
 
     gl_FragData[0] = vec4(final, 1);
 }
