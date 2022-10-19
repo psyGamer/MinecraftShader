@@ -15,6 +15,10 @@ uniform sampler2D colortex1; // Normal
 uniform sampler2D colortex2; // Lightmap
 uniform sampler2D colortex4;
 
+/*
+const int colortex0Format = RGBA16;
+*/
+
 uniform sampler2D depthtex0;
 
 uniform sampler2D shadowtex0;
@@ -23,7 +27,11 @@ uniform sampler2D shadowcolor0;
 
 uniform sampler2D noisetex;
 
+#ifdef SUN_ROTATION
+const float sunPathRotation = SUN_ROTATION;
+#else
 const float sunPathRotation = 0;
+#endif // SUN_ROTATION
 
 const int shadowMapResolution = 1024;
 const int noiseTextureResolution = 128; // Default value is 64
@@ -32,7 +40,7 @@ const float Ambient = 0.025;
 const vec3 TorchColor = vec3(1, 0.25, 0.08);
 const vec3 SkyColor = vec3(0.05, 0.15, 0.3);
 
-#ifdef SHADOWS
+#ifdef DYNAMIC_SHADOWS
 const int ShadowSamples = 2;
 const int ShadowSamplesPerSize = 2 * ShadowSamples + 1;
 const int TotalSamples = ShadowSamplesPerSize * ShadowSamplesPerSize;
@@ -97,7 +105,7 @@ vec3 getShadow(float depth) {
     shadowAccum /= TotalSamples;
     return shadowAccum;
 }
-#endif // SHADOWS
+#endif // DYNAMIC_SHADOWS
 
 void main() {
     vec3 albedo = texture2D(colortex0, TexCoords).rgb;
@@ -114,16 +122,20 @@ void main() {
 
     vec2 lightmap = texture2D(colortex2, TexCoords).rg;
 
-#ifdef SHADOWS
-    vec3 lightmapColor = getLightmapColor(lightmap);
-
+#ifdef DIFFUSE_SHADOWS
     vec3 normal = normalize(texture2D(colortex1, TexCoords).rgb * 2 - 1);
     // Compute cos theta between the normal and sun directions
     float diff = max(dot(normal, normalize(sunPosition)), 0);
-    vec3 diffuse = albedo * (lightmapColor + diff * getShadow(depth) + Ambient);
-#else  // SHADOWS
-    vec3 diffuse = albedo * lightmap + Ambient;
-#endif // SHADOWS
+#else
+    float diff = 1;
+#endif
 
-    gl_FragData[0] = vec4(diffuse, 1);
+#ifdef DYNAMIC_SHADOWS
+    vec3 lightmapColor = getLightmapColor(lightmap);
+    vec3 final = albedo * (lightmapColor + diff * getShadow(depth) + Ambient);
+#else
+    vec3 final = albedo * lightmap + Ambient;
+#endif // DYNAMIC_SHADOWS
+
+    gl_FragData[0] = vec4(final, 1);
 }
