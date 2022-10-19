@@ -90,7 +90,7 @@ vec3 transparentShadow(in vec3 sampleCoords) {
 
 vec3 getShadow(float depth) {
     vec3 clipSpace = vec3(TexCoords, depth) * 2 - 1;
-    vec4 shadowSpace = clip2Shadow(clipSpace);
+    vec4 shadowSpace = clip2shadow(clipSpace);
     vec3 sampleCoords = shadowSpace.xyz * 0.5 + 0.5;
 
     float randomAngle = texture2D(noisetex, TexCoords * 20).r * 100;
