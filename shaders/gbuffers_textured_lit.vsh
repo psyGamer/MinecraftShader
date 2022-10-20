@@ -1,5 +1,6 @@
 #version 120
 
+#include "settings.glsl"
 #include "lib/space_transform.glsl"
 
 attribute vec4 mc_Entity;
@@ -75,11 +76,13 @@ void main() {
     // Transform them into the [0, 1] range
     LmCoords = (LmCoords * 33.05 / 32.0) - (1.05 / 32.0);
 
-    World.xyz += (mc_Entity.x == 1 && TexCoords.t < mc_midTexCoord.t) ||
-                 (mc_Entity.x == 2 && TexCoords.t > mc_midTexCoord.t) ||
-                  mc_Entity.x == 3
-        ? getWind(World.xyz + cameraPosition)
-        : vec3(0);
+    #ifdef WAVY_OBJECTS_ENABLED
+        World.xyz += (mc_Entity.x == 1 && TexCoords.t < mc_midTexCoord.t) ||
+                    (mc_Entity.x == 2 && TexCoords.t > mc_midTexCoord.t) ||
+                    mc_Entity.x == 3
+            ? getWind(World.xyz + cameraPosition)
+            : vec3(0);
+    #endif
 
     Material = mc_Entity.x == 10
         ? vec4(1, 0, 0, 1)

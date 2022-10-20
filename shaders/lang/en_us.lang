@@ -1,6 +1,10 @@
 screen.SHADOW_SCREEN = Shadows
 option.DYNAMIC_SHADOWS = Dynamic Shadows
 option.DYNAMIC_SHADOW_SAMPLES = Dynamic Shadow Samples
+option.shadowMapResolution = Shadow Map Resolution
 option.DIFFUSE_SHADOWS = Diffuse Shadows
 
-option.SUN_ROTATION = Sun/Moon Angle
+screen.WAVY_OBJECTS = Wavying Objects
+option.WAVY_OBJECTS_ENABLED = Enabled
+
+option.sunPathRotation = Sun/Moon Angle

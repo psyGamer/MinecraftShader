@@ -1,8 +1,6 @@
 #version 120
 
-#define composite
-#include "shader.h"
-
+#include "settings.glsl"
 #include "lib/space_transform.glsl"
 
 varying vec2 TexCoords;
@@ -25,20 +23,15 @@ uniform sampler2D shadowcolor0;
 uniform sampler2D lightmap;
 uniform sampler2D noisetex;
 
-#ifdef SUN_ROTATION
-const float sunPathRotation = SUN_ROTATION;
-#else
-const float sunPathRotation = 0;
-#endif // SUN_ROTATION
-
-const int shadowMapResolution = 1024;
+const float sunPathRotation = 0; //[-90 -85 -80 -75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90]
+const int shadowMapResolution = 1024; //[128 256 512 1024 1536 2048 2560 3072 3584 4096 6144 8192]
 const int noiseTextureResolution = 128; // Default value is 64
 
 #ifdef DYNAMIC_SHADOWS
 #ifdef DYNAMIC_SHADOW_SAMPLES
 const int ShadowSamples = DYNAMIC_SHADOW_SAMPLES;
 #else
-const int ShadowSamples = 1;
+const int ShadowSamples = 2;
 #endif // DYNAMIC_SHADOW_SAMPLES
 
 const int ShadowSamplesPerSize = 2 * ShadowSamples + 1;
@@ -65,7 +58,7 @@ vec3 getShadow(float depth) {
     float cosTheta = cos(randomAngle);
     float sinTheta = sin(randomAngle);
     // We can move our division by the shadow map resolution here for a small speedup
-    mat2 rotation =  mat2(cosTheta, -sinTheta, sinTheta, cosTheta) / shadowMapResolution;
+    mat2 rotation = mat2(cosTheta, -sinTheta, sinTheta, cosTheta) / 1024;
 
     vec3 shadowAccum = vec3(0);
     for(int x = -ShadowSamples; x <= ShadowSamples; x++){
