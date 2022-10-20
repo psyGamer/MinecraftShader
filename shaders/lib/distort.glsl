@@ -1,5 +1,6 @@
+const float shadowmapBias = 0.85;
+
 vec2 distortPosition(in vec2 position){
-    float centerDistance = length(position);
-    float distortionFactor = mix(1, centerDistance, 0.9);
+    float distortionFactor = length(position * 1.169) * shadowmapBias + (1.0 - shadowmapBias);
     return position / distortionFactor;
 }
