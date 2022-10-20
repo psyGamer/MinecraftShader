@@ -13,18 +13,16 @@ uniform vec3 sunPosition;
 uniform sampler2D colortex0; // Color
 uniform sampler2D colortex1; // Normal
 uniform sampler2D colortex2; // Lightmap
-uniform sampler2D colortex4;
 
 /*
 const int colortex0Format = RGBA16;
 */
 
 uniform sampler2D depthtex0;
-
 uniform sampler2D shadowtex0;
 uniform sampler2D shadowtex1;
 uniform sampler2D shadowcolor0;
-
+uniform sampler2D lightmap;
 uniform sampler2D noisetex;
 
 #ifdef SUN_ROTATION
@@ -36,10 +34,6 @@ const float sunPathRotation = 0;
 const int shadowMapResolution = 1024;
 const int noiseTextureResolution = 128; // Default value is 64
 
-const float Ambient = 0.025;
-const vec3 TorchColor = vec3(1, 0.25, 0.08);
-const vec3 SkyColor = vec3(0.05, 0.15, 0.3);
-
 #ifdef DYNAMIC_SHADOWS
 #ifdef DYNAMIC_SHADOW_SAMPLES
 const int ShadowSamples = DYNAMIC_SHADOW_SAMPLES;
@@ -49,32 +43,6 @@ const int ShadowSamples = 1;
 
 const int ShadowSamplesPerSize = 2 * ShadowSamples + 1;
 const int TotalSamples = ShadowSamplesPerSize * ShadowSamplesPerSize;
-
-float adjustLightmapTorch(in float torch) {
-    const float K = 2;
-    const float P = 5.06;
-    return K * pow(torch, P);
-}
-
-float adjustLightmapSky(in float sky) {
-    return pow(sky, 4);
-}
-
-vec2 adjustLightmap(in vec2 lightmap) {
-    vec2 newLightMap;
-    newLightMap.x = adjustLightmapTorch(lightmap.x);
-    newLightMap.y = adjustLightmapSky(lightmap.y);
-    return newLightMap;
-}
-
-vec3 getLightmapColor(in vec2 lightmap){
-    lightmap = adjustLightmap(lightmap);
-    
-    vec3 torchLighting = lightmap.x * TorchColor;
-    vec3 skyLighting = lightmap.y * SkyColor;
-    
-    return torchLighting + skyLighting;
-}
 
 float visibility(in sampler2D shadowMap, in vec3 sampleCoords) {
     return step(sampleCoords.z - 0.001, texture2D(shadowMap, sampleCoords.xy).r);
@@ -125,24 +93,24 @@ void main() {
         return;
     }
 
-    vec2 lightmap = texture2D(colortex2, TexCoords).rg;
-
 #ifdef DIFFUSE_SHADOWS
     vec3 normal = normalize(texture2D(colortex1, TexCoords).rgb * 2 - 1);
     // Compute cos theta between the normal and sun directions
     float diff = max(dot(normal, normalize(sunPosition)), 0);
 #else
-    float diff = 1;
+    float diff = 0.86;
 #endif
 
+    vec3 light = texture2D(colortex2, TexCoords).rgb;
+
 #ifdef DYNAMIC_SHADOWS
-    vec3 lightmapColor = getLightmapColor(lightmap);
-    vec3 final = albedo * (lightmapColor + diff * getShadow(depth) + Ambient);
+    vec3 final = albedo * (light + diff * getShadow(depth));
 #else
-    vec3 final = albedo * lightmap + Ambient;
+    vec3 final = albedo * (light + diff);
 #endif // DYNAMIC_SHADOWS
 
     // final = vec3(getShadow(depth));
 
+    // gl_FragData[0] = vec4(albedo * (lightmap.s * lightmap.t + Ambient), 1);
     gl_FragData[0] = vec4(final, 1);
 }

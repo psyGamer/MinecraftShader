@@ -1,4 +1,6 @@
+screen.SHADOW_SCREEN = Shadows
 option.DYNAMIC_SHADOWS = Dynamic Shadows
 option.DYNAMIC_SHADOW_SAMPLES = Dynamic Shadow Samples
 option.DIFFUSE_SHADOWS = Diffuse Shadows
+
 option.SUN_ROTATION = Sun/Moon Angle

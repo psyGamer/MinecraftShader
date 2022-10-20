@@ -8,10 +8,12 @@ attribute vec2 mc_midTexCoord;
 uniform float frameTimeCounter;
 uniform vec3 cameraPosition;
 
+varying vec4 World;
 varying vec2 TexCoords;
 varying vec2 LmCoords;
 varying vec3 Normal;
 varying vec4 Color;
+varying vec4 Material;
 
 const float pi = 3.14159265358979323846;
 
@@ -63,7 +65,7 @@ vec3 getWind(vec3 pos) {
 }
 
 void main() {
-    vec4 position = gl_Vertex;
+    World = gl_Vertex;
     TexCoords = gl_MultiTexCoord0.st;
     Normal = gl_NormalMatrix * gl_Normal;
     Color = gl_Color;
@@ -73,11 +75,15 @@ void main() {
     // Transform them into the [0, 1] range
     LmCoords = (LmCoords * 33.05 / 32.0) - (1.05 / 32.0);
 
-    position.xyz += (mc_Entity.x == 1 && TexCoords.t < mc_midTexCoord.t) ||
-                    (mc_Entity.x == 2 && TexCoords.t > mc_midTexCoord.t) ||
-                     mc_Entity.x == 3
-        ? getWind(position.xyz + cameraPosition)
+    World.xyz += (mc_Entity.x == 1 && TexCoords.t < mc_midTexCoord.t) ||
+                 (mc_Entity.x == 2 && TexCoords.t > mc_midTexCoord.t) ||
+                  mc_Entity.x == 3
+        ? getWind(World.xyz + cameraPosition)
         : vec3(0);
 
-    gl_Position = gl_ModelViewProjectionMatrix * position;
+    Material = mc_Entity.x == 10
+        ? vec4(1, 0, 0, 1)
+        : vec4(0, 1, 0, 1);
+
+    gl_Position = gl_ModelViewProjectionMatrix * World;
 }
