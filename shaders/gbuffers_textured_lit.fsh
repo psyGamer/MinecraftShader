@@ -1,6 +1,5 @@
 #version 120
 
-varying vec4 World;
 varying vec2 TexCoords;
 varying vec2 LmCoords;
 varying vec3 Normal;
@@ -45,10 +44,9 @@ void main() {
     vec4 albedo = texture2D(texture, TexCoords) * Color;
 	vec3 light = getLightmapColor(LmCoords);
 
-    /* DRAWBUFFERS:01234 */
+	/* DRAWBUFFERS:0124 */
     gl_FragData[0] = albedo;
-    gl_FragData[1] = vec4(Normal * 0.5 + 0.5, 1);
-    gl_FragData[2] = vec4(light + Ambient, albedo.a);
-    gl_FragData[3] = World;
-    gl_FragData[4] = Material;
+    gl_FragData[1] = vec4(light + Ambient, albedo.a);
+    gl_FragData[2] = vec4(Normal, 1);
+    gl_FragData[3] = Material;
 }

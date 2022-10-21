@@ -9,7 +9,6 @@ attribute vec2 mc_midTexCoord;
 uniform float frameTimeCounter;
 uniform vec3 cameraPosition;
 
-varying vec4 World;
 varying vec2 TexCoords;
 varying vec2 LmCoords;
 varying vec3 Normal;
@@ -66,9 +65,9 @@ vec3 getWind(vec3 pos) {
 }
 
 void main() {
-    World = gl_Vertex;
+    vec4 position = gl_Vertex;
     TexCoords = gl_MultiTexCoord0.st;
-    Normal = gl_NormalMatrix * gl_Normal;
+    Normal = gl_Normal * 0.5 + 0.5;
     Color = gl_Color;
 
     // Use the texture matrix instead of dividing by 15 to maintain compatiblity for each version of Minecraft
@@ -77,16 +76,16 @@ void main() {
     LmCoords = (LmCoords * 33.05 / 32.0) - (1.05 / 32.0);
 
     #ifdef WAVY_OBJECTS_ENABLED
-        World.xyz += (mc_Entity.x == 1 && TexCoords.t < mc_midTexCoord.t) ||
+        position.xyz += (mc_Entity.x == 1 && TexCoords.t < mc_midTexCoord.t) ||
                     (mc_Entity.x == 2 && TexCoords.t > mc_midTexCoord.t) ||
                     mc_Entity.x == 3
-            ? getWind(World.xyz + cameraPosition)
+            ? getWind(position.xyz + cameraPosition)
             : vec3(0);
     #endif
 
     Material = mc_Entity.x == 10
-        ? vec4(1, 0, 0, 1)
-        : vec4(0, 1, 0, 1);
+        ? vec4(0.5, 0, 0, 1)
+        : vec4(0, 0, 0, 1);
 
-    gl_Position = gl_ModelViewProjectionMatrix * World;
+    gl_Position = gl_ModelViewProjectionMatrix * position;
 }

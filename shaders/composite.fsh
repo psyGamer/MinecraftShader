@@ -73,6 +73,8 @@ vec3 getShadow(float depth) {
 }
 #endif // DYNAMIC_SHADOWS
 
+void _main() {}
+
 void main() {
     vec3 albedo = texture2D(colortex0, TexCoords).rgb;
 
@@ -80,6 +82,7 @@ void main() {
     albedo = pow(albedo, vec3(2.2));
 
     float depth = texture2D(depthtex0, TexCoords).r;
+	
     // The sky is at depth = 1, so we can return early
     if (depth == 1) {
         gl_FragData[0] = vec4(albedo, 1);
@@ -87,14 +90,14 @@ void main() {
     }
 
 #ifdef DIFFUSE_SHADOWS
-    vec3 normal = normalize(texture2D(colortex1, TexCoords).rgb * 2 - 1);
+	vec3 normal = world2screen(texture2D(colortex2, TexCoords).rgb * 2 - 1);
     // Compute cos theta between the normal and sun directions
-    float diff = max(dot(normal, normalize(sunPosition)), 0);
+    float diff = max(dot(normalize(normal), normalize(sunPosition)), 0);
 #else
     float diff = 0.86;
 #endif
 
-    vec3 light = texture2D(colortex2, TexCoords).rgb;
+    vec3 light = texture2D(colortex1, TexCoords).rgb;
 
 #ifdef DYNAMIC_SHADOWS
     vec3 final = albedo * (light + diff * getShadow(depth));
@@ -102,8 +105,7 @@ void main() {
     vec3 final = albedo * (light + diff);
 #endif // DYNAMIC_SHADOWS
 
-    // final = vec3(getShadow(depth));
+    final = pow(final, vec3(1 / 2.2));
 
-    // gl_FragData[0] = vec4(albedo * (lightmap.s * lightmap.t + Ambient), 1);
     gl_FragData[0] = vec4(final, 1);
 }
