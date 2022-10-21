@@ -60,10 +60,12 @@ void main() {
     Entity = vec4(1);
 
     #ifdef WAVY_OBJECTS_ENABLED
-        float offX = position.x + cameraPosition.x + frameTimeCounter;
-        float offZ = position.z + cameraPosition.z + frameTimeCounter;
-        position.y += sin(offX * 1.2) * 0.2 * cos(offZ * 2) * 0.3 - 0.01;
-        position.y += sin(offZ * 1.8) * 0.2 * cos(offX * 3) * 0.2 - 0.01;
+        if (mc_Entity.x == 1) {
+            float offX = position.x + cameraPosition.x + frameTimeCounter;
+            float offZ = position.z + cameraPosition.z + frameTimeCounter;
+            position.y += sin(offX * 1.2) * 0.2 * cos(offZ * 2) * 0.3 - 0.01;
+            position.y += sin(offZ * 1.8) * 0.2 * cos(offX * 3) * 0.2 - 0.01;
+        }
     #endif
     // position.xyz += getWind(position.xyz + cameraPosition);
 

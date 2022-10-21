@@ -25,8 +25,9 @@ const int noiseTextureResolution = 128; // Default value is 64
 
 #ifdef DYNAMIC_SHADOWS
     const int ShadowSamples = DYNAMIC_SHADOW_SAMPLES;
+	const float HalfShadowSamples = ShadowSamples * 0.5;
 
-    const int ShadowSamplesPerSize = 2 * ShadowSamples + 1;
+    const int ShadowSamplesPerSize = ShadowSamples + 1;
     const int TotalSamples = ShadowSamplesPerSize * ShadowSamplesPerSize;
 
     float visibility(in sampler2D shadowMap, in vec3 sampleCoords) {
@@ -53,8 +54,8 @@ const int noiseTextureResolution = 128; // Default value is 64
         mat2 rotation = mat2(cosTheta, -sinTheta, sinTheta, cosTheta) / 1024;
 
         vec3 shadowAccum = vec3(0);
-        for(int x = -ShadowSamples; x <= ShadowSamples; x++){
-            for(int y = -ShadowSamples; y <= ShadowSamples; y++){
+        for(float x = -HalfShadowSamples; x <= HalfShadowSamples; x++){
+            for(float y = -HalfShadowSamples; y <= HalfShadowSamples; y++){
                 vec2 offset = rotation * vec2(x, y);
                 vec3 currentSampleCoordinate = vec3(sampleCoords.xy + offset, sampleCoords.z);
                 shadowAccum += transparentShadow(currentSampleCoordinate);
