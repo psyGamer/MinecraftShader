@@ -24,11 +24,7 @@ const int shadowMapResolution = 1024; //[128 256 512 1024 1536 2048 2560 3072 35
 const int noiseTextureResolution = 128; // Default value is 64
 
 #ifdef DYNAMIC_SHADOWS
-    const int ShadowSamples = DYNAMIC_SHADOW_SAMPLES;
-	const float HalfShadowSamples = ShadowSamples * 0.5;
-
-    const int ShadowSamplesPerSize = ShadowSamples + 1;
-    const int TotalSamples = ShadowSamplesPerSize * ShadowSamplesPerSize;
+    const int ShadowSamples = DYNAMIC_SHADOWS_SAMPLES;
 
     float visibility(in sampler2D shadowMap, in vec3 sampleCoords) {
         return step(sampleCoords.z - 0.001, texture2D(shadowMap, sampleCoords.xy).r);
@@ -43,25 +39,37 @@ const int noiseTextureResolution = 128; // Default value is 64
     }
 
     vec3 getShadow(float depth) {
-        vec3 clipSpace = vec3(TexCoords, depth) * 2 - 1;
-        vec4 shadowSpace = clip2shadow(clipSpace);
-        vec3 sampleCoords = shadowSpace.xyz * 0.5 + 0.5;
+        vec3 clipPos = vec3(TexCoords, depth) * 2 - 1;
+		vec3 viewPos = clip2view(clipPos);
+
+		float distSquared = dot(viewPos, viewPos);
+		if (distSquared > DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST)
+			return vec3(1);
+
+		float fade = clamp(1 - (distSquared) / (DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST), 0, 1);
+		float sampleFade = clamp(1 - (distSquared - (DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST) * 0.05) / (DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST*0.8), 0, 1);
+
+        vec3 shadowPos = clip2shadow(clipPos);
+        vec3 sampleCoords = shadowPos * 0.5 + 0.5;
 
         float randomAngle = texture2D(noisetex, TexCoords * 20).r * 100;
         float cosTheta = cos(randomAngle);
         float sinTheta = sin(randomAngle);
         // We can move our division by the shadow map resolution here for a small speedup
         mat2 rotation = mat2(cosTheta, -sinTheta, sinTheta, cosTheta) / 1024;
-
         vec3 shadowAccum = vec3(0);
-        for(float x = -HalfShadowSamples; x <= HalfShadowSamples; x++){
-            for(float y = -HalfShadowSamples; y <= HalfShadowSamples; y++){
+
+		float FadedHalfShadowSamples = ShadowSamples * 0.5 * sampleFade;
+		int totalSamples = 0;
+        for(float x = -FadedHalfShadowSamples; x <= FadedHalfShadowSamples; x++){
+            for(float y = -FadedHalfShadowSamples; y <= FadedHalfShadowSamples; y++){
                 vec2 offset = rotation * vec2(x, y);
                 vec3 currentSampleCoordinate = vec3(sampleCoords.xy + offset, sampleCoords.z);
                 shadowAccum += transparentShadow(currentSampleCoordinate);
+				totalSamples++;
             }
         }
-        shadowAccum /= TotalSamples;
+        shadowAccum /= totalSamples;
         return shadowAccum;
     }
 #endif // DYNAMIC_SHADOWS

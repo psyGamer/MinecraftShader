@@ -19,17 +19,28 @@ vec4 screen2view(vec2 texCoords, float depth) {
     return view;
 }
 
-vec4 clip2world(vec3 clip) {
-    vec3 view = clip2view(clip);
+vec3 view2world(vec3 view) {
     vec4 world = gbufferModelViewInverse * vec4(view, 1);
-    return world;
+    return world.xyz;
 }
 
-vec4 clip2shadow(vec3 clip) {
-    vec4 world = clip2world(clip);
-    vec4 shadow = shadowProjection * shadowModelView * world;
+vec3 clip2world(vec3 clip) {
+    vec3 view = clip2view(clip);
+    return view2world(view);
+}
+
+vec3 clip2shadow(vec3 clip) {
+    vec3 world = clip2world(clip);
+    vec4 shadow = shadowProjection * shadowModelView * vec4(world, 1);
     shadow.xy = distortPosition(shadow.xy);
-    return shadow;
+    return shadow.xyz;
+}
+
+vec3 view2shadow(vec3 view) {
+    vec3 world = view2world(view);
+    vec4 shadow = shadowProjection * shadowModelView * vec4(world, 1);
+    shadow.xy = distortPosition(shadow.xy);
+    return shadow.xyz;
 }
 
 vec4 view2screen(vec3 view, vec2 screenSize) {
@@ -38,11 +49,6 @@ vec4 view2screen(vec3 view, vec2 screenSize) {
     screen.xy   = screen.xy * 0.5 + 0.5;
     screen.xy  *= screenSize;
     return screen;
-}
-
-vec4 view2world(vec3 view) {
-    vec4 world = gbufferModelViewInverse * vec4(view, 1);
-    return world;
 }
 
 vec3 world2screen(vec3 world) {

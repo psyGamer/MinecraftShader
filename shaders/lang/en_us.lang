@@ -11,7 +11,8 @@ option.AMBIENT_B = Ambient §bBlue
 
 screen.SHADOW_SCREEN = Shadows
 option.DYNAMIC_SHADOWS = Dynamic Shadows
-option.DYNAMIC_SHADOW_SAMPLES = Dynamic Shadow Samples
+option.DYNAMIC_SHADOWS_SAMPLES = Dynamic Shadow Samples
+option.DYNAMIC_SHADOWS_MAX_DIST = Maximum Shadow Distance
 option.shadowMapResolution = Shadow Map Resolution
 option.DIFFUSE_SHADOWS = Diffuse Shadows
 
