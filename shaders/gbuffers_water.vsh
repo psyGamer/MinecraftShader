@@ -1,8 +1,12 @@
 #version 120
 
-uniform vec3 cameraPosition;
+#include "settings.glsl"
 
 attribute vec4 mc_Entity;
+attribute vec2 mc_midTexCoord;
+
+uniform float frameTimeCounter;
+uniform vec3 cameraPosition;
 
 varying vec2 TexCoords;
 varying vec2 LmCoords;
@@ -11,6 +15,8 @@ varying vec4 Color;
 varying vec4 WorldPos;
 varying vec4 Material;
 varying vec4 Entity;
+
+const float pi = 3.14159265358979323846;
 
 #ifdef WAVY_OBJECTS_ENABLED
     vec3 getWind(vec3 pos) {
@@ -54,13 +60,12 @@ void main() {
     Entity = vec4(1);
 
     #ifdef WAVY_OBJECTS_ENABLED
-        position.xyz += (mc_Entity.x == 101 && TexCoords.t < mc_midTexCoord.t) ||
-                    (mc_Entity.x == 102 && TexCoords.t > mc_midTexCoord.t) ||
-                    mc_Entity.x == 103 ||
-                    mc_Entity.x == 1
-            ? getWind(position.xyz + cameraPosition)
-            : vec3(0);
+        float offX = position.x + cameraPosition.x + frameTimeCounter;
+        float offZ = position.z + cameraPosition.z + frameTimeCounter;
+        position.y += sin(offX * 1.2) * 0.2 * cos(offZ * 2) * 0.3 - 0.01;
+        position.y += sin(offZ * 1.8) * 0.2 * cos(offX * 3) * 0.2 - 0.01;
     #endif
+    // position.xyz += getWind(position.xyz + cameraPosition);
 
     WorldPos = position;
     WorldPos.xyz += cameraPosition;

@@ -11,12 +11,8 @@ uniform vec3 sunPosition;
 uniform sampler2D colortex0; // Color
 uniform sampler2D colortex1; // Normal
 uniform sampler2D colortex2; // Lightmap
-
-/*
-const int colortex0Format = RGBA16;
-*/
-
 uniform sampler2D depthtex0;
+uniform sampler2D depthtex1;
 uniform sampler2D shadowtex0;
 uniform sampler2D shadowtex1;
 uniform sampler2D shadowcolor0;
