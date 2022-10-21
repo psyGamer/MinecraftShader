@@ -1,3 +1,14 @@
+screen.COLORS = Colors
+option.TORCH_R = Torch §cRed
+option.TORCH_G = Torch §aGreen
+option.TORCH_B = Torch §bBlue
+option.SKY_R = Sky §cRed
+option.SKY_G = Sky §aGreen
+option.SKY_B = Sky §bBlue
+option.AMBIENT_R = Ambient §cRed
+option.AMBIENT_G = Ambient §aGreen
+option.AMBIENT_B = Ambient §bBlue
+
 screen.SHADOW_SCREEN = Shadows
 option.DYNAMIC_SHADOWS = Dynamic Shadows
 option.DYNAMIC_SHADOW_SAMPLES = Dynamic Shadow Samples
@@ -7,4 +18,11 @@ option.DIFFUSE_SHADOWS = Diffuse Shadows
 screen.WAVY_OBJECTS = Wavying Objects
 option.WAVY_OBJECTS_ENABLED = Enabled
 
+screen.REFLECTIONS = Reflections
+option.SSR = Screenspace Reflections
+
+screen.WATER = Water
+option.USE_WATER_TEXTURE = Use Water Texture
+
+screen.MISC = Miscellaneous
 option.sunPathRotation = Sun/Moon Angle

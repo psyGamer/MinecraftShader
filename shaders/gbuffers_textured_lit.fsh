@@ -1,5 +1,7 @@
 #version 120
 
+#include "settings.glsl"
+
 varying vec2 TexCoords;
 varying vec2 LmCoords;
 varying vec3 Normal;
@@ -9,10 +11,9 @@ varying vec4 Material;
 uniform sampler2D texture;
 uniform sampler2D lightmap;
 
-const vec3 Ambient = vec3(0.025);
-// const vec3 TorchColor = vec3(1, 0.25, 0.08);
-const vec3 TorchColor = vec3(1);
-const vec3 SkyColor = vec3(0.05, 0.15, 0.3);
+const vec3 Ambient = vec3(AMBIENT_R, AMBIENT_G, AMBIENT_B);
+const vec3 TorchColor = vec3(TORCH_R, TORCH_G, TORCH_B);
+const vec3 SkyColor = vec3(SKY_R, SKY_G, SKY_B);
 
 float adjustLightmapTorch(in float torch) {
     const float K = 2;
