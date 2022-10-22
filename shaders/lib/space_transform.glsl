@@ -51,11 +51,22 @@ vec4 view2screen(vec3 view, vec2 screenSize) {
     return screen;
 }
 
+vec3 uv2screen(vec2 texCoords, float depth) {
+    vec4 uv = vec4((texCoords - 0.5) * 2, depth, 1);
+    vec4 screen = gbufferProjectionInverse * uv;
+    screen /= screen.w;
+    return screen.xyz;
+}
+
+vec3 screen2uv(vec3 screen){
+    vec4 uv = gbufferProjection * vec4(screen, 1);
+    uv.xyz /= uv.w;
+    return uv.xyz * 0.5 + 0.5;
+}
+
 vec3 world2screen(vec3 world) {
-   mat4 modelView = gbufferModelView;
-
-   // clear transformations to stabilize conversions
-   modelView[3] = vec4(0.0, 0.0, 0.0, 1.0);
-
-   return (modelView * vec4(world, 1.0)).xyz;
+    mat4 modelView = gbufferModelView;
+    // Avoid artefacts caused by view bobbing
+    modelView[3] = vec4(0.0, 0.0, 0.0, 1.0);
+    return (modelView * vec4(world, 1.0)).xyz;
 }

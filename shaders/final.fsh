@@ -1,116 +1,95 @@
 #version 120
 
 #include "settings.glsl"
+#include "lib/space_transform.glsl"
+
+/* DRAWBUFFERS:0 */
 
 uniform sampler2D colortex0; // Color
 uniform sampler2D colortex2; // Normal
 uniform sampler2D colortex4; // Material
 uniform sampler2D depthtex0;
 
-uniform mat4 gbufferProjection;
-uniform mat4 gbufferProjectionInverse;
-uniform mat4 gbufferModelView;
-
 varying vec2 TexCoords;
 
 #ifdef SSR
-	const int   maxRaySteps         = 15;
-	const int   maxRefinements      = 4;
-	const float rayMultiplier       = 2;
-	const float refinmentMultiplier = 0.1;
+    const int   maxRaySteps         = 15;
+    const int   maxRefinements      = 4;
+    const float rayMultiplier       = 2;
+    const float refinmentMultiplier = 0.1;
 
-	vec3 uv2screen(vec2 texCoords, float depth) {
-		vec4 uv = vec4((texCoords - 0.5) * 2, depth, 1);
-		vec4 screen = gbufferProjectionInverse * uv;
-		screen /= screen.w;
-		return screen.xyz;
-	}
+    vec4 screenSpaceReflection(vec3 position, vec3 reflection) {
+        /*
+        Author: mateusak (https://github.com/mateusak)
+        Source: https://github.com/mateusak/minecraft-miniature-shader/blob/cfdd7eb4bf8a520485699ff1ac0db8ec8fb36c63/shaders/final.fsh#L59-L100
 
-	vec3 screen2uv(vec3 screen){
-		vec4 uv = gbufferProjection * vec4(screen, 1);
-		uv.xyz /= uv.w;
-		return uv.xyz * 0.5 + 0.5;
-	}
+        The code of this function is licensed under:
 
-	vec3 world2screen(vec3 world) {
-		mat4 modelView = gbufferModelView;
-		// Avoid artefacts caused by view bobbing
-		modelView[3] = vec4(0.0, 0.0, 0.0, 1.0);
-		return (modelView * vec4(world, 1.0)).xyz;
-	}
+        MIT License
 
-	vec4 screenSpaceReflection(vec3 position, vec3 reflection) {
-		/*
-		Author: mateusak (https://github.com/mateusak)
-		Source: https://github.com/mateusak/minecraft-miniature-shader/blob/cfdd7eb4bf8a520485699ff1ac0db8ec8fb36c63/shaders/final.fsh#L59-L100
+        Copyright (c) 2022 Mateus A. Kreuch
 
-		The code of this function is licensed under:
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
 
-		MIT License
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
 
-		Copyright (c) 2022 Mateus A. Kreuch
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        */
 
-		Permission is hereby granted, free of charge, to any person obtaining a copy
-		of this software and associated documentation files (the "Software"), to deal
-		in the Software without restriction, including without limitation the rights
-		to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-		copies of the Software, and to permit persons to whom the Software is
-		furnished to do so, subject to the following conditions:
+        vec3 curPos = position + reflection;
+        vec3 oldPos = position;
 
-		The above copyright notice and this permission notice shall be included in all
-		copies or substantial portions of the Software.
+        int j = 0;
+        for (int _ = 0; _ < maxRaySteps; _++) {
+            vec3 curUV = screen2uv(curPos);
 
-		THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-		IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-		FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-		AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-		LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-		OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-		SOFTWARE.
-		*/
+            if (curUV.x < 0.0 || curUV.x > 1.0 || 
+                curUV.y < 0.0 || curUV.y > 1.0 || 
+                curUV.z < 0.0 || curUV.z > 1.0) break;
+            
+            vec3 sample = uv2screen(curUV.st, texture2D(depthtex0, curUV.st).x);
+            float dist  = abs(curPos.z - sample.z);
+            float len   = dot(reflection, reflection);
 
-		vec3 curPos = position + reflection;
-		vec3 oldPos = position;
+            // check if distance between last and current depth is
+            // smaller than the current length of the reflection vector
+            // the numbers are trial and error to produce less distortion
+            if (dist * dist < 2 * len * exp(0.029 * len) && texture2D(colortex4, curUV.st).r <= 0.001) {
+                j++;
 
-		int j = 0;
-		for (int _ = 0; _ < maxRaySteps; _++) {
-			vec3 curUV = screen2uv(curPos);
+                if (j >= maxRefinements) {
+                    // fade reflection with vignette
+                    vec2 vignette = curUV.st * (1.0 - curUV.st);
 
-			if (curUV.x < 0.0 || curUV.x > 1.0 || 
-				curUV.y < 0.0 || curUV.y > 1.0 || 
-				curUV.z < 0.0 || curUV.z > 1.0) break;
-			
-			vec3 sample = uv2screen(curUV.st, texture2D(depthtex0, curUV.st).x);
-			float dist  = abs(curPos.z - sample.z);
-			float len   = dot(reflection, reflection);
+                    return vec4(
+                        texture2D(colortex0, curUV.st).rgb,
+                        clamp(pow(15.0*vignette.s*vignette.t, 1.5), 0.0, 1.0)
+                    );
+                }
 
-			// check if distance between last and current depth is
-			// smaller than the current length of the reflection vector
-			// the numbers are trial and error to produce less distortion
-			if (dist * dist < 2 * len * exp(0.029 * len) && texture2D(colortex4, curUV.st).r <= 0.001) {
-				j++;
+                curPos = oldPos;
+                reflection *= refinmentMultiplier;
+            }
 
-				if (j >= maxRefinements) {
-					// fade reflection with vignette
-					vec2 vignette = curUV.st * (1.0 - curUV.st);
-
-					return vec4(
-						texture2D(colortex0, curUV.st).rgb,
-						clamp(pow(15.0*vignette.s*vignette.t, 1.5), 0.0, 1.0)
-					);
-				}
-
-				curPos = oldPos;
-				reflection *= refinmentMultiplier;
-			}
-
-			reflection *= rayMultiplier;
-			oldPos = curPos;
-			curPos += reflection;
-		}
-		
-		return vec4(0, 0, 0, 1);
-	}
+            reflection *= rayMultiplier;
+            oldPos = curPos;
+            curPos += reflection;
+        }
+        
+        return vec4(0, 0, 0, 1);
+    }
 #endif // SSR
 
 void main() {

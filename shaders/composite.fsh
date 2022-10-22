@@ -1,12 +1,15 @@
 #version 120
 
 #include "settings.glsl"
+#include "lib/color.glsl"
 #include "lib/space_transform.glsl"
 
 varying vec2 TexCoords;
 
 // Direction of the sun (not normalized!)
 uniform vec3 sunPosition;
+
+/* DRAWBUFFERS:0 */
 
 uniform sampler2D colortex0; // Color
 uniform sampler2D colortex1; // Normal
@@ -16,16 +19,12 @@ uniform sampler2D depthtex1;
 uniform sampler2D shadowtex0;
 uniform sampler2D shadowtex1;
 uniform sampler2D shadowcolor0;
-uniform sampler2D lightmap;
 uniform sampler2D noisetex;
 
 const float sunPathRotation = 0; //[-90 -85 -80 -75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90]
 const int shadowMapResolution = 1024; //[128 256 512 1024 1536 2048 2560 3072 3584 4096 6144 8192]
-const int noiseTextureResolution = 128; // Default value is 64
 
 #ifdef DYNAMIC_SHADOWS
-    const int ShadowSamples = DYNAMIC_SHADOWS_SAMPLES;
-
     float visibility(in sampler2D shadowMap, in vec3 sampleCoords) {
         return step(sampleCoords.z - 0.001, texture2D(shadowMap, sampleCoords.xy).r);
     }
@@ -40,17 +39,17 @@ const int noiseTextureResolution = 128; // Default value is 64
 
     vec3 getShadow(float depth) {
         vec3 clipPos = vec3(TexCoords, depth) * 2 - 1;
-		vec3 viewPos = clip2view(clipPos);
+        vec3 viewPos = clip2view(clipPos);
 
-		float distSquared = dot(viewPos, viewPos);
-		if (distSquared > DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST)
-			return vec3(1);
+        float distSquared = dot(viewPos, viewPos);
+        if (distSquared > DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST)
+            return vec3(1);
 
-		float fade = clamp(1 - (distSquared) / (DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST), 0, 1);
-		float sampleFade = clamp(1 - (distSquared - (DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST) * 0.05) / (DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST*0.8), 0, 1);
+        float fade = clamp(1 - (distSquared) / (DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST), 0, 1);
+        float sampleFade = clamp(1 - (distSquared - (DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST) * 0.05) / (DYNAMIC_SHADOWS_MAX_DIST*DYNAMIC_SHADOWS_MAX_DIST*0.8), 0, 1);
 
         vec3 shadowPos = clip2shadow(clipPos);
-        vec3 sampleCoords = shadowPos * 0.5 + 0.5;
+        vec3 shadowCoords = shadowPos * 0.5 + 0.5;
 
         float randomAngle = texture2D(noisetex, TexCoords * 20).r * 100;
         float cosTheta = cos(randomAngle);
@@ -59,14 +58,14 @@ const int noiseTextureResolution = 128; // Default value is 64
         mat2 rotation = mat2(cosTheta, -sinTheta, sinTheta, cosTheta) / 1024;
         vec3 shadowAccum = vec3(0);
 
-		float FadedHalfShadowSamples = ShadowSamples * 0.5 * sampleFade;
-		int totalSamples = 0;
-        for(float x = -FadedHalfShadowSamples; x <= FadedHalfShadowSamples; x++){
-            for(float y = -FadedHalfShadowSamples; y <= FadedHalfShadowSamples; y++){
+        float fadedSampleCount = DYNAMIC_SHADOWS_SAMPLES * 0.5 * sampleFade;
+        int totalSamples = 0;
+        for(float x = -fadedSampleCount; x <= fadedSampleCount; x++){
+            for(float y = -fadedSampleCount; y <= fadedSampleCount; y++){
                 vec2 offset = rotation * vec2(x, y);
-                vec3 currentSampleCoordinate = vec3(sampleCoords.xy + offset, sampleCoords.z);
-                shadowAccum += transparentShadow(currentSampleCoordinate);
-				totalSamples++;
+                vec3 offsetShadowCoords = vec3(shadowCoords.xy + offset, shadowCoords.z);
+                shadowAccum += transparentShadow(offsetShadowCoords);
+                totalSamples++;
             }
         }
         shadowAccum /= totalSamples;
@@ -76,9 +75,7 @@ const int noiseTextureResolution = 128; // Default value is 64
 
 void main() {
     vec3 albedo = texture2D(colortex0, TexCoords).rgb;
-
-    // Account for gamma correction
-    albedo = pow(albedo, vec3(2.2));
+    albedo = srgb2linear(albedo);
 
     float depth = texture2D(depthtex0, TexCoords).r;
     
@@ -104,7 +101,6 @@ void main() {
         vec3 final = albedo * (light + diff);
     #endif // DYNAMIC_SHADOWS
 
-    final = pow(final, vec3(1 / 2.2));
-
+    final = linear2srgb(final);
     gl_FragData[0] = vec4(final, 1);
 }

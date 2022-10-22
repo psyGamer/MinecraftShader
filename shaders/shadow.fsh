@@ -3,8 +3,10 @@
 varying vec2 TexCoords;
 varying vec4 Color;
 
+/* DRAWBUFFERS:0 */
+
 uniform sampler2D texture;
 
-void main() { 
+void main() {
     gl_FragData[0] = texture2D(texture, TexCoords) * Color;
 }

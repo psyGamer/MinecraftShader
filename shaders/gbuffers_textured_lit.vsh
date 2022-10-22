@@ -77,11 +77,11 @@ void main() {
     // Transform them into the [0, 1] range
     LmCoords = (LmCoords * 33.05 / 32.0) - (1.05 / 32.0);
 
-	// (r) Reflectivness
+    // (r) Reflectivness
     Material = vec4(
-		(mc_Entity.x - 200) / 10.0, // 201 -> 210 = 0.1 -> 1.0
-		0, 0, 0
-	);
+        (mc_Entity.x - 200) / 10.0, // 201 -> 210 = 0.1 -> 1.0
+        0, 0, 0
+    );
 
     #ifdef WAVY_OBJECTS_ENABLED
         position.xyz += (mc_Entity.x == 101 && TexCoords.t < mc_midTexCoord.t) ||

@@ -8,6 +8,8 @@ varying vec3 Normal;
 varying vec4 Color;
 varying vec4 Material;
 
+/* DRAWBUFFERS:0124 */
+
 uniform sampler2D texture;
 uniform sampler2D lightmap;
 
@@ -43,9 +45,8 @@ vec3 getLightmapColor(in vec2 lightmap){
 
 void main() {
     vec4 albedo = texture2D(texture, TexCoords) * Color;
-	vec3 light = getLightmapColor(LmCoords);
+    vec3 light = getLightmapColor(LmCoords);
 
-	/* DRAWBUFFERS:0124 */
     gl_FragData[0] = albedo;
     gl_FragData[1] = vec4(light + Ambient, albedo.a);
     gl_FragData[2] = vec4(Normal, 1);
