@@ -94,6 +94,8 @@ varying vec2 TexCoords;
 
 void main() {
     vec4 color = texture2D(colortex0, TexCoords);
+    gl_FragData[0] = color;
+    return;
 
     #ifdef SSR
         // (r) Reflectivness, (g) none, (b) none, (a) none

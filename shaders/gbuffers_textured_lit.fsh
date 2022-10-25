@@ -2,6 +2,8 @@
 
 #include "settings.glsl"
 
+uniform int worldTime;
+
 varying vec2 TexCoords;
 varying vec2 LmCoords;
 varying vec3 Normal;
@@ -12,10 +14,7 @@ varying vec4 Material;
 
 uniform sampler2D texture;
 uniform sampler2D lightmap;
-
-const vec3 Ambient = vec3(AMBIENT_R, AMBIENT_G, AMBIENT_B);
-const vec3 TorchColor = vec3(TORCH_R, TORCH_G, TORCH_B);
-const vec3 SkyColor = vec3(SKY_R, SKY_G, SKY_B);
+uniform sampler2D colortex8; // Sky Color
 
 float adjustLightmapTorch(in float torch) {
     const float K = 2;
@@ -34,21 +33,10 @@ vec2 adjustLightmap(in vec2 lightmap) {
     return newLightMap;
 }
 
-vec3 getLightmapColor(in vec2 lightmap){
-    lightmap = adjustLightmap(lightmap);
-    
-    vec3 torchLighting = lightmap.x * TorchColor;
-    vec3 skyLighting = lightmap.y * SkyColor;
-    
-    return torchLighting + skyLighting;
-}
-
 void main() {
     vec4 albedo = texture2D(texture, TexCoords) * Color;
-    vec3 light = getLightmapColor(LmCoords);
-
     gl_FragData[0] = albedo;
-    gl_FragData[1] = vec4(light + Ambient, albedo.a);
-    gl_FragData[2] = vec4(Normal, 1);
+    gl_FragData[1] = vec4(Normal, 1);
+    gl_FragData[2] = vec4(adjustLightmap(LmCoords), 0, albedo.a);
     gl_FragData[3] = Material;
 }

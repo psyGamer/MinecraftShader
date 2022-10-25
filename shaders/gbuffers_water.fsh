@@ -12,7 +12,7 @@ varying vec4 WorldPos;
 varying vec4 Material;
 varying vec4 Entity;
 
-/* DRAWBUFFERS:024 */
+/* DRAWBUFFERS:014 */
 
 uniform sampler2D texture;
 uniform sampler2D lightmap;
